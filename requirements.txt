@@ -1,5 +1,4 @@
 dash
-ffprobe
 gunicorn
 matplotlib
 numpy
