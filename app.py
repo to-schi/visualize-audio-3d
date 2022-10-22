@@ -1,4 +1,5 @@
 import base64
+import logging
 import os
 from urllib import request
 
@@ -10,7 +11,7 @@ from matplotlib import mlab
 from pydub import AudioSegment
 
 UPLOADED = "uploads/uploaded."
-ASSETS_FILE = "assets/detroy.mp3"
+ASSETS_FILE = "assets/destroy.mp3"
 
 app = Dash(
     __name__,
@@ -26,7 +27,7 @@ def load_audio(filepath):
     Load a local file and return data as file uri.
     """
     encoded_audio = base64.b64encode(open(filepath, "rb").read())
-    src = "data:audio/mpeg;base64,{}".format(encoded_audio.decode())
+    src = f"data:audio/mpeg;base64,{encoded_audio.decode()}"
     return src
 
 
@@ -36,7 +37,7 @@ def save_file(contents):
     """
     if not os.path.exists("./uploads"):
         os.makedirs("./uploads")
-
+    # logging.critical(contents)
     filetype = check_filetype(contents)
     with request.urlopen(contents) as response:
         data = response.read()
@@ -121,10 +122,7 @@ app.layout = html.Div(
             className="app__header",
         ),
         # body
-        dcc.Graph(
-            id="audio_graph",
-            style={"width": width, "margin": "0px"},  # , "display": "inline-block"},
-        ),
+        dcc.Graph(id="audio_graph", style={"width": width, "margin": "0px"}),
         html.Audio(
             id="audio_player",
             src="",
@@ -136,7 +134,6 @@ app.layout = html.Div(
             id="upload_audio",
             children=html.Div(["Drag and Drop ", html.A("wav or mp3")]),
             style={
-                # "display": "inline-block",
                 "width": width,
                 "height": "40px",
                 "lineHeight": "45px",
@@ -149,7 +146,7 @@ app.layout = html.Div(
             multiple=False,
         ),
     ],
-    style={"width": "100%", "height": "640"},  # , "display": "inline-block"},  #
+    style={"width": "100%", "height": "640"},
 )
 
 
@@ -158,9 +155,8 @@ app.layout = html.Div(
     Output("audio_player", component_property="src"),
     Output("audio_player", component_property="autoPlay"),
     Input("upload_audio", component_property="contents"),
-    # Input("audio_graph", component_property="clickData")
 )
-def update_chart(contents):  # , clickData):
+def update_chart(contents):
     filetype = "mp3"
     plot_src = ASSETS_FILE
     src = ASSETS_FILE
@@ -170,23 +166,10 @@ def update_chart(contents):  # , clickData):
         save_file(contents)
         filetype = check_filetype(contents)
         plot_src = UPLOADED + filetype
-        src = load_audio(UPLOADED + filetype)
+        src = load_audio(plot_src)
         autoplay = True
 
-    # if clickData:
-    #     logging.critical(clickData["points"][0]["x"])
-    #     X = clickData["points"][0]["x"]
-    #     skipto = max(0, X - 0.5)
-    #     # give uri timerange:
-    #     how to combine with load_audio()? (src=filepath only with ./assets)
-    #     src = f"{UPLOADED+filetype}"  ##t={skipto},{skipto+1}"
-    #     autoplay = True
-
-    return (
-        plot_audio_3d(plot_src, color_scheme="Jet", nfft=256),
-        src,
-        autoplay,
-    )
+    return plot_audio_3d(plot_src, color_scheme="Jet", nfft=256), src, autoplay
 
 
 if __name__ == "__main__":
