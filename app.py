@@ -10,7 +10,7 @@ from matplotlib import mlab
 from pydub import AudioSegment
 
 UPLOADED = "uploads/uploaded."
-ASSETS = "assets/another."
+ASSETS_FILE = "assets/detroy.mp3"
 
 app = Dash(
     __name__,
@@ -32,7 +32,7 @@ def load_audio(filepath):
 
 def save_file(contents):
     """
-    Read data from file uri and save as file.
+    Read data from uri and save as file.
     """
     if not os.path.exists("./uploads"):
         os.makedirs("./uploads")
@@ -162,8 +162,8 @@ app.layout = html.Div(
 )
 def update_chart(contents):  # , clickData):
     filetype = "mp3"
-    plot_src = ASSETS + filetype
-    src = ASSETS + filetype
+    plot_src = ASSETS_FILE
+    src = ASSETS_FILE
     autoplay = False
 
     if contents:
@@ -178,6 +178,7 @@ def update_chart(contents):  # , clickData):
     #     X = clickData["points"][0]["x"]
     #     skipto = max(0, X - 0.5)
     #     # give uri timerange:
+    #     how to combine with load_audio()? (src=filepath only with ./assets)
     #     src = f"{UPLOADED+filetype}"  ##t={skipto},{skipto+1}"
     #     autoplay = True
 
