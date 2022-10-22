@@ -1,4 +1,5 @@
 import base64
+import os
 from urllib import request
 
 import numpy as np
@@ -33,6 +34,9 @@ def save_file(contents):
     """
     Read data from file uri and save as file.
     """
+    if not os.path.exists("./uploads"):
+        os.makedirs("./uploads")
+
     filetype = check_filetype(contents)
     with request.urlopen(contents) as response:
         data = response.read()
