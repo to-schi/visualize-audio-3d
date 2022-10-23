@@ -1,6 +1,6 @@
-import base64
-import logging
-import os
+# import base64
+# import logging
+# import os
 from urllib import request
 
 import numpy as np
@@ -10,8 +10,7 @@ from dash.dependencies import Input, Output
 from matplotlib import mlab
 from pydub import AudioSegment
 
-UPLOADED = "uploads/uploaded."
-ASSETS_FILE = "assets/destroy.mp3"
+ASSETS_FILE = "assets/audio"
 
 app = Dash(
     __name__,
@@ -22,26 +21,13 @@ server = app.server
 app.title = "Visualize Audio in 3D"
 
 
-def load_audio(filepath):
-    """
-    Load a local file and return data as file uri.
-    """
-    encoded_audio = base64.b64encode(open(filepath, "rb").read())
-    src = f"data:audio/mpeg;base64,{encoded_audio.decode()}"
-    return src
-
-
 def save_file(contents):
     """
     Read data from uri and save as file.
     """
-    if not os.path.exists("./uploads"):
-        os.makedirs("./uploads")
-    # logging.critical(contents)
-    filetype = check_filetype(contents)
     with request.urlopen(contents) as response:
         data = response.read()
-    with open(UPLOADED + filetype, "wb") as f:
+    with open(ASSETS_FILE, "wb") as f:
         f.write(data)
 
 
@@ -122,10 +108,13 @@ app.layout = html.Div(
             className="app__header",
         ),
         # body
-        dcc.Graph(id="audio_graph", style={"width": width, "margin": "0px"}),
+        dcc.Graph(
+            id="audio_graph",
+            style={"width": width, "margin": "0px"},  # , "display": "inline-block"},
+        ),
         html.Audio(
             id="audio_player",
-            src="",
+            src=ASSETS_FILE,
             controls=True,
             autoPlay=False,
             style={"width": width, "margin": "10px",},
@@ -134,6 +123,7 @@ app.layout = html.Div(
             id="upload_audio",
             children=html.Div(["Drag and Drop ", html.A("wav or mp3")]),
             style={
+                # "display": "inline-block",
                 "width": width,
                 "height": "40px",
                 "lineHeight": "45px",
@@ -146,32 +136,39 @@ app.layout = html.Div(
             multiple=False,
         ),
     ],
-    style={"width": "100%", "height": "640"},
+    style={"width": "100%", "height": "640"},  # , "display": "inline-block"},  #
 )
 
 
 @app.callback(
-    Output("audio_graph", component_property="figure"),
     Output("audio_player", component_property="src"),
     Output("audio_player", component_property="autoPlay"),
+    Input("audio_graph", component_property="clickData"),
+)
+def update_player(clickData):
+    autoplay = False
+    src = ASSETS_FILE
+    if clickData:
+        # logging.critical(clickData["points"][0]["x"])
+        X = clickData["points"][0]["x"]
+        # give uri timerange:
+        src = f"{src}#t={X},{X+0.5}"
+        autoplay = True
+    return src, autoplay
+
+
+@app.callback(
+    Output("audio_graph", component_property="figure"),
     Input("upload_audio", component_property="contents"),
 )
 def update_chart(contents):
-    filetype = "mp3"
     plot_src = ASSETS_FILE
-    src = ASSETS_FILE
-    autoplay = False
 
     if contents:
         save_file(contents)
-        filetype = check_filetype(contents)
-        plot_src = UPLOADED + filetype
-        src = load_audio(plot_src)
-        autoplay = True
-
-    return plot_audio_3d(plot_src, color_scheme="Jet", nfft=256), src, autoplay
+    return plot_audio_3d(plot_src, color_scheme="Jet", nfft=256)
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True, dev_tools_hot_reload=False)
+    app.run_server(debug=True, dev_tools_hot_reload=True)
 
